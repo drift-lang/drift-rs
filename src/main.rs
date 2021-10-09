@@ -1,11 +1,12 @@
 use std::env;
+use std::fs::read_to_string;
 use std::io::{stdin, stdout, Write};
 
 pub const COMPILER_VERSION: &'static str = "Drift 0.0.1 (MADE AT Oct 2021 08, 13:41:48)";
 pub const LICENSE: &'static str = "GNU General Public License GPL v3.0";
 
 #[derive(Debug, PartialEq)]
-enum IResult {
+pub enum IResult {
     Done,
 }
 
@@ -55,19 +56,10 @@ fn main() {
                 fp.unwrap().clone()
             };
             let nfp = path.is_empty();
-
-            let result = run(Env { mode, path, nfp });
-            println!("{:?}", result);
+            execute(Env { mode, path, nfp });
         }
         _ => println!("{}", usage()),
     }
-}
-
-fn run(env: Env) -> IResult {
-    if env.mode == IMode::Repl {
-        repl();
-    }
-    IResult::Done
 }
 
 fn usage() -> String {
@@ -90,9 +82,28 @@ license: {}
     )
 }
 
+fn execute(env: Env) {
+    if env.mode == IMode::Repl {
+        repl();
+    } else {
+        if env.nfp {
+            panic!("Specify a drift program source file");
+        }
+        if !env.path.ends_with(".ft") {
+            panic!("Specify a file ending in an `.ft` suffix");
+        }
+        match read_to_string(env.path) {
+            Ok(code) => {
+                let result = evaluate(code);
+                println!("{:?}", result);
+            }
+            Err(error) => panic!("Failed to read file: {}", error),
+        }
+    }
+}
+
 fn repl() {
     let mut p = 1;
-    
     loop {
         print!("{:03} > ", p);
 
@@ -101,8 +112,13 @@ fn repl() {
         stdin().read_line(&mut line).expect("Failed to read line!");
 
         if line.trim_end().len() > 0 {
-            print!("EVAL: {}", line);
+            evaluate(line);
         }
         p += 1;
     }
+}
+
+pub fn evaluate(code: String) -> IResult {
+    // let lex = lexer::Lexer::new(code);
+    IResult::Done
 }
