@@ -1,11 +1,12 @@
 use std::fmt::{Debug, Formatter, Result};
+use TokenKind::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenKind {
     Eof,
     Literal,
     Number,
-    String,
+    Str,
     Char,
     Float,
     Add,
@@ -13,12 +14,34 @@ pub enum TokenKind {
     Mul,
     Div,
     Sur,
-
+    RArrow,
+    LArrow,
+    Dot,
+    Comma,
+    Colon,
+    Eq,
+    Semicolon,
+    Greater,
+    Less,
+    GrEq,
+    LeEq,
+    Addr,
+    Or,
+    Bang,
+    BangEq,
+    EqEq,
+    LBrace,
+    RBrace,
+    LParen,
+    RParen,
+    LBracket,
+    RBracket,
+    Underline,
     Def,
     Ret,
-    If,
     Aop,
     For,
+    If,
     Ef,
     Nf,
     Out,
@@ -28,26 +51,44 @@ pub enum TokenKind {
     Nil,
 }
 
-// pub const KLiteral: Vec<&'static str> = vec![
-//     "def", "ret", "if", "aop", "for", "ef", "nf", "out", "go", "new", "use", "nil",
-// ];
+type KwMap = (&'static str, TokenKind);
+type KwType = &'static [KwMap];
 
-pub const K: Vec<TokenKind> = vec![TokenKind::Def];
-pub const V: Vec<&'static str> = vec!["def"];
+pub const KEYWORDS: KwType = &[
+    ("def", Def),
+    ("ret", Ret),
+    ("aop", Aop),
+    ("for", For),
+    ("if", If),
+    ("ef", Ef),
+    ("nf", Nf),
+    ("out", Out),
+    ("go", Go),
+    ("new", New),
+    ("use", Use),
+    ("nil", Nil),
+];
 
-// use TokenKind::*;
+pub fn to_kw(lit: &String) -> TokenKind {
+    for v in KEYWORDS {
+        if lit == v.0 {
+            return v.1;
+        }
+    }
+    Literal
+}
 
 pub struct Token {
-    literal: String,
+    lit: String,
     line: u32,
-    offset: u8,
+    offset: i8,
     kind: TokenKind,
 }
 
 impl Token {
-    pub fn new(literal: String, line: u32, offset: u8, kind: TokenKind) -> Self {
+    pub fn new(lit: String, line: u32, offset: i8, kind: TokenKind) -> Self {
         Token {
-            literal,
+            lit,
             line,
             offset,
             kind,
@@ -60,7 +101,7 @@ impl Debug for Token {
         write!(
             f,
             "{{ {}:{} {:?} {} }}",
-            self.line, self.offset, self.kind, self.literal
+            self.line, self.offset, self.kind, self.lit
         )
     }
 }
