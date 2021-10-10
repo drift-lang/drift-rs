@@ -13,7 +13,29 @@ pub enum TokenKind {
     Mul,
     Div,
     Sur,
+
+    Def,
+    Ret,
+    If,
+    Aop,
+    For,
+    Ef,
+    Nf,
+    Out,
+    Go,
+    New,
+    Use,
+    Nil,
 }
+
+// pub const KLiteral: Vec<&'static str> = vec![
+//     "def", "ret", "if", "aop", "for", "ef", "nf", "out", "go", "new", "use", "nil",
+// ];
+
+pub const K: Vec<TokenKind> = vec![TokenKind::Def];
+pub const V: Vec<&'static str> = vec!["def"];
+
+// use TokenKind::*;
 
 pub struct Token {
     literal: String,

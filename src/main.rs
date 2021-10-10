@@ -2,6 +2,8 @@ use std::env;
 use std::fs::read_to_string;
 use std::io::{stdin, stdout, Write};
 
+use drift::lexer::Lexer;
+
 pub const COMPILER_VERSION: &'static str = "Drift 0.0.1 (MADE AT Oct 2021 08, 13:41:48)";
 pub const LICENSE: &'static str = "GNU General Public License GPL v3.0";
 
@@ -112,6 +114,7 @@ fn repl() {
         stdin().read_line(&mut line).expect("Failed to read line!");
 
         if line.trim_end().len() > 0 {
+            line.pop();
             evaluate(line);
         }
         p += 1;
@@ -119,6 +122,7 @@ fn repl() {
 }
 
 pub fn evaluate(code: String) -> IResult {
-    // let lex = lexer::Lexer::new(code);
+    let tokens = Lexer::new(code).lexical();
+    println!("{:?}", tokens);
     IResult::Done
 }
