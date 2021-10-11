@@ -1,9 +1,9 @@
 use crate::token;
-use crate::token::TokenKind::*;
+use crate::token::{Token, TokenKind::*};
 
 pub struct Lexer {
     cs: Vec<char>,
-    tokens: Vec<token::Token>,
+    tokens: Vec<Token>,
     p: usize,
     line: u32,
     offset: i8,
@@ -20,34 +20,16 @@ impl Lexer {
         }
     }
 
-    pub fn lexical(mut self) -> Vec<token::Token> {
+    pub fn lexical(mut self) -> Vec<Token> {
         self.dissemble();
 
         let len = self.cs.len();
-        let mut new_line = false;
+        let mut new_line = true;
 
         while self.p < len {
             let mut c = self.cs[self.p];
 
-            while self.is_space(c) {
-                if c == '\n' {
-                    self.line += 1;
-                    self.offset = -1;
-                    new_line = true;
-                }
-
-                if self.p + 1 >= len {
-                    self.p += 1;
-                    break;
-                }
-
-                self.p += 1;
-                c = self.cs[self.p];
-
-                if new_line {
-                    self.offset += 1;
-                }
-            }
+            self.skip_whitespace(&mut c, &mut new_line);
 
             if self.p >= len {
                 break;
@@ -59,49 +41,71 @@ impl Lexer {
             if self.is_digit(c) {}
             if self.is_ident(c) {}
 
-            match c {
-                '+' => self.emit("+", Add),
-                '-' => {
-                    if self.next('>') {
-                        self.emit("->", RArrow);
-                    } else {
-                        self.emit("-", Sub);
-                    }
-                }
-                ' ' | '\t' | '\r' | '\n' | '\0' => continue,
-                '#' => loop {
-                    self.p += 1;
-                    if self.cs[self.p] == '\n' {
-                        break;
-                    }
-                },
-                _ => panic!("unknown character '{}' ASCII {}", c, c as u8),
-            }
-            self.p += 1;
+            self.lex_other(&mut c);
         }
-        self.emit("Eof", Eof);
+        self.emit("EOF", Eof);
         self.tokens
     }
 
+    fn skip_whitespace(&mut self, c: &mut char, new_line: &mut bool) {
+        while self.is_space(*c) {
+            if *c == '\n' {
+                self.line += 1;
+                self.offset = -1;
+                *new_line = true;
+            }
+
+            if self.p + 1 >= self.cs.len() {
+                self.p += 1;
+                break;
+            }
+            self.p += 1;
+            *c = self.cs[self.p];
+
+            if *new_line {
+                self.offset += 1;
+            }
+        }
+    }
+
     fn next(&mut self, other: char) -> bool {
-        if self.p + 1 >= self.cs.len() {
+        let i = self.p + 1;
+
+        if i >= self.cs.len() {
             return false;
         }
-
-        let c = self.cs[self.p];
-        if c == other {
-            self.p += 2;
+        if self.cs[i] == other {
+            self.p += 1;
             return true;
         }
-
-        self.p += 1;
         return false;
     }
 
     fn emit(&mut self, lit: &'static str, kind: token::TokenKind) {
         let lit = String::from(lit);
-        let tok = token::Token::new(lit, self.line, self.offset, kind);
+        let tok = Token::new(lit, self.line, self.offset, kind);
         self.tokens.push(tok);
+    }
+
+    fn lex_other(&mut self, c: &mut char) {
+        match *c {
+            '+' => self.emit("+", Add),
+            '-' => {
+                if self.next('>') {
+                    self.emit("->", RArrow);
+                } else {
+                    self.emit("-", Sub);
+                }
+            }
+            ' ' | '\t' | '\r' | '\n' | '\0' => {}
+            '#' => loop {
+                self.p += 1;
+                if self.cs[self.p] == '\n' {
+                    break;
+                }
+            },
+            _ => panic!("unknown character '{}' ASCII {}", c, *c as u8),
+        }
     }
 
     fn is_space(&self, c: char) -> bool {
@@ -120,5 +124,10 @@ impl Lexer {
         for (i, &v) in self.cs.iter().enumerate() {
             println!("\t{:03} {:>5} {:>20}", i, v, v as u8);
         }
+    }
+
+    fn debug(&self) {
+        let c = self.cs[self.p];
+        println!("<{} {}>", c, c);
     }
 }

@@ -89,17 +89,17 @@ fn execute(env: Env) {
         repl();
     } else {
         if env.nfp {
-            panic!("Specify a drift program source file");
+            panic!("specify a drift program source file");
         }
         if !env.path.ends_with(".ft") {
-            panic!("Specify a file ending in an `.ft` suffix");
+            panic!("specify a file ending in an `.ft` suffix");
         }
         match read_to_string(env.path) {
             Ok(code) => {
                 let result = evaluate(code);
                 println!("{:?}", result);
             }
-            Err(error) => panic!("Failed to read file: {}", error),
+            Err(error) => panic!("failed to read file: {}", error),
         }
     }
 }
@@ -110,8 +110,8 @@ fn repl() {
         print!("{:03} > ", p);
 
         let mut line = String::new();
-        stdout().flush().expect("Failed to flush the screen!");
-        stdin().read_line(&mut line).expect("Failed to read line!");
+        stdout().flush().expect("failed to flush the screen!");
+        stdin().read_line(&mut line).expect("failed to read line!");
 
         if line.trim_end().len() > 0 {
             line.pop();
