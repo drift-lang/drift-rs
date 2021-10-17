@@ -38,8 +38,33 @@ impl Lexer {
                 new_line = false;
             }
 
-            if self.is_digit(c) {}
-            if self.is_ident(c) {}
+            if self.is_digit(c) {
+                let mut lit = String::new();
+
+                while self.is_digit(c) {
+                    lit.push(c);
+                    self.p += 1;
+                    c = self.cs[self.p];
+                }
+
+                self.emit_lit(lit, Number);
+                continue;
+            }
+
+            if self.is_ident(c) {
+                let mut lit = String::new();
+
+                while self.is_ident(c) {
+                    lit.push(c);
+                    self.p += 1;
+                    c = self.cs[self.p];
+                }
+
+                let kind = token::to_kw(&lit);
+                
+                self.emit_lit(lit, kind);
+                continue;
+            }
 
             self.lex_other(&mut c);
         }
@@ -85,6 +110,11 @@ impl Lexer {
         let lit = String::from(lit);
         let tok = Token::new(lit, self.line, self.offset, kind);
         self.tokens.push(tok);
+    }
+
+    fn emit_lit(&mut self, lit: String, kind: token::TokenKind) {
+        self.tokens
+            .push(Token::new(lit, self.line, self.offset, kind));
     }
 
     fn lex_other(&mut self, c: &mut char) {
