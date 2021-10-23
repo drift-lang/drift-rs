@@ -99,7 +99,9 @@ fn execute(env: Env) {
                 let result = evaluate(code);
                 println!("{:?}", result);
             }
-            Err(error) => panic!("failed to read file: {}", error),
+            Err(msg) => {
+                panic!("failed to read file: {}", msg);
+            }
         }
     }
 }
@@ -123,6 +125,8 @@ fn repl() {
 
 pub fn evaluate(code: String) -> IResult {
     let tokens = Lexer::new(code).lexical();
-    println!("{:?}", tokens);
+    for i in &tokens {
+        println!("{:?}", i);
+    }
     IResult::Done
 }

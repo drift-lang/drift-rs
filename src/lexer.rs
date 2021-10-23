@@ -1,6 +1,25 @@
 use crate::token;
 use crate::token::{Token, TokenKind::*};
 
+type TokenMap = (&'static str, token::TokenKind);
+
+#[derive(Debug)]
+struct Entry(char, char, TokenMap, TokenMap);
+
+const LEXER_ENTRYS: &'static [Entry] = &[
+    Entry('-', '>', ("->", RArrow), ("-", Sub)),
+    Entry('=', '=', ("==", EqEq), ("=", Equal)),
+];
+
+fn get_entry<'a>(p: char) -> Option<&'a Entry> {
+    for i in LEXER_ENTRYS {
+        if i.0 == p {
+            return Some(i);
+        }
+    }
+    None
+}
+
 pub struct Lexer {
     cs: Vec<char>,
     tokens: Vec<Token>,
@@ -21,8 +40,6 @@ impl Lexer {
     }
 
     pub fn lexical(mut self) -> Vec<Token> {
-        self.dissemble();
-
         let len = self.cs.len();
         let mut new_line = true;
 
@@ -61,12 +78,11 @@ impl Lexer {
                 }
 
                 let kind = token::to_kw(&lit);
-                
                 self.emit_lit(lit, kind);
                 continue;
             }
 
-            self.lex_other(&mut c);
+            self.other(&mut c);
         }
         self.emit("EOF", Eof);
         self.tokens
@@ -117,24 +133,25 @@ impl Lexer {
             .push(Token::new(lit, self.line, self.offset, kind));
     }
 
-    fn lex_other(&mut self, c: &mut char) {
-        match *c {
-            '+' => self.emit("+", Add),
-            '-' => {
-                if self.next('>') {
-                    self.emit("->", RArrow);
-                } else {
-                    self.emit("-", Sub);
-                }
+    fn other(&mut self, c: &mut char) {
+        if let Some(en) = get_entry(*c) {
+            if self.next(en.1) {
+                self.emit(en.2 .0, en.2 .1);
+            } else {
+                self.emit(en.3 .0, en.3 .1);
             }
-            ' ' | '\t' | '\r' | '\n' | '\0' => {}
-            '#' => loop {
-                self.p += 1;
-                if self.cs[self.p] == '\n' {
-                    break;
-                }
-            },
-            _ => panic!("unknown character '{}' ASCII {}", c, *c as u8),
+            self.p += 1;
+        } else {
+            match *c {
+                '+' => self.emit("+", Add),
+                '#' => loop {
+                    self.p += 1;
+                    if self.cs[self.p] == '\n' {
+                        break;
+                    }
+                },
+                _ => panic!("unknown character '{}' ASCII {}", c, *c as u8),
+            }
         }
     }
 
@@ -148,16 +165,5 @@ impl Lexer {
 
     fn is_ident(&self, c: char) -> bool {
         (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
-    }
-
-    fn dissemble(&self) {
-        for (i, &v) in self.cs.iter().enumerate() {
-            println!("\t{:03} {:>5} {:>20}", i, v, v as u8);
-        }
-    }
-
-    fn debug(&self) {
-        let c = self.cs[self.p];
-        println!("<{} {}>", c, c);
     }
 }

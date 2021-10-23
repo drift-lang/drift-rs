@@ -19,7 +19,7 @@ pub enum TokenKind {
     Dot,
     Comma,
     Colon,
-    Eq,
+    Equal,
     Semicolon,
     Greater,
     Less,
